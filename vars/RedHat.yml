@@ -8,7 +8,6 @@ __ha_cluster_role_essential_packages:
   - pcs
   # even if qnetd is not being configured, it is needed for removing qnetd
   # configuration
-  - corosync-qnetd
   - openssl
 
 __ha_cluster_fullstack_node_packages:
@@ -18,6 +17,9 @@ __ha_cluster_fullstack_node_packages:
   - pacemaker
 
 __ha_cluster_cloud_agents_packages: {}
+
+__ha_cluster_qnet_node_packages:
+  - corosync-qnetd
 
 __ha_cluster_qdevice_node_packages:
   - corosync-qdevice

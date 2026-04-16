@@ -1,5 +1,12 @@
 # SPDX-License-Identifier: MIT
 ---
+- name: Install QNetd packages
+  ansible.builtin.package:
+    name: "{{ __ha_cluster_qnet_node_packages | d([]) }}"
+    state: "{{ 'latest' if ha_cluster_use_latest_packages else 'present' }}"
+    use: "{{ (__ha_cluster_is_ostree | d(false)) |
+             ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+
 - name: Remove qnetd configuration
   # This pcs command doesn't provide means to detect whether it did any changes
   command:

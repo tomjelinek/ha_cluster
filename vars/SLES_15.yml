@@ -10,7 +10,7 @@ __ha_cluster_zypper_patterns:
 __ha_cluster_role_essential_packages:
   - 'cluster-glue'
   - 'openssl'
-#  - 'libxml2-tools'
+  # - 'libxml2-tools'
 
 # Pattern ha_sles includes all important packages for cluster
 # Requires: SUSE Linux Enterprise High Availability Extension on SLES
