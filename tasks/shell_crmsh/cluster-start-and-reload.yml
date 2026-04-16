@@ -42,12 +42,6 @@
   when: not ansible_check_mode
   changed_when: false
 
-- name: Start corosync-qdevice
-  ansible.builtin.service:
-    name: corosync-qdevice
-    state: started
-  when: __ha_cluster_qdevice_in_use
-
 - name: Start pacemaker
   ansible.builtin.service:
     name: pacemaker

@@ -1,19 +1,18 @@
 {{ ansible_managed | comment }}
 {{ "system_role:ha_cluster" | comment(prefix="", postfix="") }}
 totem {
-{% if ha_cluster_totem and ha_cluster_totem.options | d({}) %}
+        cluster_name: {{ ha_cluster_cluster_name }}
 {# Add default version if not present in options #}
-{% if ha_cluster_totem.options | selectattr('name', 'equalto', 'version') | list | length == 0 %}
+{% if ha_cluster_totem | d({}) | length == 0 or ha_cluster_totem.options | d([]) | selectattr('name', 'equalto', 'version') | list | length == 0 %}
         version: 2
 {% endif %}
-        cluster_name: {{ ha_cluster_cluster_name }}
 {# Use ha_cluster_transport.type if transport is not in options, else use default #}
 {% if ha_cluster_transport is defined and ha_cluster_transport.type is defined and ha_cluster_transport.type | length > 0 and ha_cluster_totem.options | selectattr('name', 'equalto', 'transport') | list | length == 0 %}
         transport: {{ ha_cluster_transport.type | quote }}
-{% elif ha_cluster_totem.options | selectattr('name', 'equalto', 'transport') | list | length == 0 %}
+{% elif ha_cluster_totem | d({}) | length == 0 or ha_cluster_totem.options | selectattr('name', 'equalto', 'transport') | list | length == 0 %}
         transport: {{ __ha_cluster_transport.type | d('udpu') }}
 {% endif %}
-{% for option in ha_cluster_totem.options %}
+{% for option in ha_cluster_totem.options | d([]) %}
 {# Use ha_cluster_transport.type if defined instead of options.transport #}
 {% if ha_cluster_transport is defined and ha_cluster_transport.type is defined and ha_cluster_transport.type | length > 0 and option.name == 'transport' %}
         transport: {{ option.value | quote }}
@@ -25,16 +24,16 @@ and ha_cluster_transport.compression | d([]) | selectattr('name', 'equalto', opt
         {{ option.name | quote }}: {{ option.value | quote }}
 {% endif %}
 {% endfor %}
-{% endif %}
-{% if ha_cluster_transport and ha_cluster_transport.options | d({}) %}
+
+{% if ha_cluster_transport and ha_cluster_transport.options | d([]) | length > 0 %}
 {% for option in ha_cluster_transport.options %}
         {{ option.name | quote }}: {{ option.value | quote }}
 {% endfor %}
-{% elif ha_cluster_transport and ha_cluster_transport.crypto | d({}) %}
+{% elif ha_cluster_transport and ha_cluster_transport.crypto | d([]) | length > 0 %}
 {% for crypto in ha_cluster_transport.crypto %}
         {{ crypto.name | quote }}: {{ crypto.value | quote }}
 {% endfor %}
-{% elif ha_cluster_transport and ha_cluster_transport.compression | d({}) %}
+{% elif ha_cluster_transport and ha_cluster_transport.compression | d([]) | length > 0 %}
 {% for compression in ha_cluster_transport.compression %}
         {{ compression.name | quote }}: {{ compression.value | quote }}
 {% endfor %}
@@ -56,7 +55,7 @@ nodelist {
 {% endfor %}
 }
 quorum {
-{% if ha_cluster_quorum and ha_cluster_quorum.options | d({}) %}
+{% if ha_cluster_quorum and ha_cluster_quorum.options | d([]) | length > 0 %}
 {% for option in ha_cluster_quorum.options | d([]) %}
         {{ option.name | quote }}: {{ option.value | quote }} 
 {% endfor %}

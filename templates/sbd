@@ -86,7 +86,12 @@ SBD_WATCHDOG_DEV="{{ node_watchdog | d('/dev/watchdog') }}"
 # Be aware that watchdog timeout set in the on-disk metadata takes
 # precedence.
 #
+{# crmsh defaults to 15 #}
+{% if ansible_facts['os_family'] != 'Suse' %}
 SBD_WATCHDOG_TIMEOUT="{{ option('watchdog-timeout', '5') }}"
+{% else %}
+SBD_WATCHDOG_TIMEOUT="{{ option('watchdog-timeout', '15') }}"
+{% endif %}
 
 ## Type: string
 ## Default: "flush,reboot"
@@ -145,4 +150,9 @@ SBD_SYNC_RESOURCE_STARTUP=yes
 #
 # Additional options for starting sbd
 #
+{# SBD defaults to uname -n and this is not needed #}
+{% if ansible_facts['os_family'] != 'Suse' %}
 SBD_OPTS="-n {{ node_name }}"
+{% else %}
+SBD_OPTS=""
+{% endif %}

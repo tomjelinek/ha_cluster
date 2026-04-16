@@ -1,5 +1,15 @@
 # SPDX-License-Identifier: MIT
 ---
+- name: Fail if 'cluster present' and 'qnetd present' are inconsistent
+  ansible.builtin.fail:
+    msg: >
+      Both 'ha_cluster_cluster_present' and 'ha_cluster_qnetd' must be either
+      defined or set to null
+  when: >
+    (ha_cluster_cluster_present is none and ha_cluster_qnetd is not none)
+    or
+    (ha_cluster_cluster_present is not none and ha_cluster_qnetd is none)
+
 - name: Discover cluster node names
   ansible.builtin.set_fact:
     __ha_cluster_node_name: "{{ ha_cluster.node_name | d(inventory_hostname) }}"
@@ -116,9 +126,9 @@
         | selectattr('name', 'match', '^host$')
         | map(attribute='value') | list | last | d('')
       }}"
-    __ha_cluster_qdevice_crm_address: "{{
+    __ha_cluster_qdevice_algorithm: "{{
         ha_cluster_quorum.device.model_options | d([])
-        | selectattr('name', 'match', '^crm-address$')
+        | selectattr('name', 'match', '^algorithm$')
         | map(attribute='value') | list | last | d('')
       }}"
 

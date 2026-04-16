@@ -145,21 +145,27 @@
     ## Resources
     - name: Configure cluster resources
       ansible.builtin.include_tasks: crm-cib-resource-primitive.yml
-      vars:
-        resource: "{{ item }}"
       loop: "{{ ha_cluster_resource_primitives }}"
+      loop_control:
+        index_var: resource_index
+        loop_var: resource
+        label: "{{ resource.id | d(resource_index) }}"
 
     - name: Configure cluster resource groups
       ansible.builtin.include_tasks: crm-cib-resource-group.yml
-      vars:
-        resource_group: "{{ item }}"
       loop: "{{ ha_cluster_resource_groups }}"
+      loop_control:
+        index_var: resource_group_index
+        loop_var: resource_group
+        label: "{{ resource_group.id | d(resource_group_index) }}"
 
     - name: Configure cluster resource clones
       ansible.builtin.include_tasks: crm-cib-resource-clone.yml
-      vars:
-        resource_clone: "{{ item }}"
       loop: "{{ ha_cluster_resource_clones }}"
+      loop_control:
+        index_var: resource_clone_index
+        loop_var: resource_clone
+        label: "{{ resource_clone.id | d(resource_clone_index) }}"
 
     ## Stonith levels - fencing_topology
     - name: Configure stonith levels - fencing_topology
@@ -173,6 +179,7 @@
       loop_control:
         index_var: constraint_index
         loop_var: constraint
+        label: "{{ constraint.id | d(constraint_index) }}"
 
     - name: Configure resource colocation constraints
       ansible.builtin.include_tasks: crm-cib-constraint-colocation.yml
@@ -181,6 +188,7 @@
       loop_control:
         index_var: constraint_index
         loop_var: constraint
+        label: "{{ constraint.id | d(constraint_index) }}"
 
     - name: Configure resource set colocation constraints
       ansible.builtin.include_tasks: crm-cib-constraint-set.yml
@@ -191,6 +199,7 @@
       loop_control:
         index_var: constraint_index
         loop_var: constraint
+        label: "{{ constraint.id | d(constraint_index) }}"
 
     - name: Configure resource order constraints
       ansible.builtin.include_tasks: crm-cib-constraint-order.yml
@@ -199,6 +208,7 @@
       loop_control:
         index_var: constraint_index
         loop_var: constraint
+        label: "{{ constraint.id | d(constraint_index) }}"
 
     - name: Configure resource set order constraints
       ansible.builtin.include_tasks: crm-cib-constraint-set.yml
@@ -209,6 +219,7 @@
       loop_control:
         index_var: constraint_index
         loop_var: constraint
+        label: "{{ constraint.id | d(constraint_index) }}"
 
     - name: Configure resource ticket constraints
       ansible.builtin.include_tasks: crm-cib-constraint-ticket.yml
@@ -217,6 +228,7 @@
       loop_control:
         index_var: constraint_index
         loop_var: constraint
+        label: "{{ constraint.id | d(constraint_index) }}"
 
     - name: Configure resource set ticket constraints
       ansible.builtin.include_tasks: crm-cib-constraint-set.yml
@@ -227,6 +239,7 @@
       loop_control:
         index_var: constraint_index
         loop_var: constraint
+        label: "{{ constraint.id | d(constraint_index) }}"
 
     ## Cluster properties
     - name: Configure cluster properties
@@ -252,13 +265,14 @@
     ## Example: No STONITH resources were defined while stonith-enabled is true
     - name: Fail if shadow CIB is invalid
       ansible.builtin.fail:
-        msg:
-          - "ERROR: Cluster configuration was invalid."
-          - Following errors have to be remediated before retrying.
-          - "{{ __ha_cluster_crm_verify.stdout_lines | d('') }}"
-          - "{{ __ha_cluster_crm_verify.stderr_lines | d('') }}"
+        msg: |
+          FAIL: Cluster configuration was invalid.
+          Following errors have to be remediated before retrying.
+          Stdout: {{ __ha_cluster_crm_verify.stdout | d('') }}
+          Stderr: {{ __ha_cluster_crm_verify.stderr | d('') }}
       when:
         - __ha_cluster_crm_verify.rc != 0
+        - '"error" in __ha_cluster_crm_verify.stderr | d("") | lower'
       check_mode: false
 
 
@@ -320,6 +334,18 @@
   ignore_errors: true
   when: __ha_cluster_cib_diff.rc == 1
   run_once: true  # noqa: run_once[task]
+
+# QDevice is configured at this point, where CIB changes are live.
+# This is required because this command requires 'stonith-enabled'
+# or 'fencing-enabled' property in live CIB, not shadow CIB.
+- name: Configure QDevice
+  ansible.builtin.include_tasks:
+    file: qdevice.yml
+  when:
+    - not ansible_check_mode
+    - __ha_cluster_qdevice_in_use
+    - __ha_cluster_qdevice_host is string
+    - __ha_cluster_qdevice_host | trim | length > 0
 
 - name: Disable maintenance mode
   ansible.builtin.command:
