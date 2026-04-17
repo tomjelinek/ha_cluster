@@ -23,7 +23,7 @@
           - 'stonith-watchdog-timeout'
           - 'fencing-watchdog-timeout'
         __watchdog_timeout_exists: >-
-          {{ ha_cluster_cluster_properties
+          {{ ha_cluster_cluster_properties | d([])
             | map(attribute='attrs')
             | flatten
             | selectattr('name', 'in', __watchdog_timeout_properties)
