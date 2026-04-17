@@ -140,7 +140,6 @@
 - name: Configure qnetd
   when:
     - ha_cluster_qnetd is not none
-    - __ha_cluster_is_booted | bool
   include_tasks: shell_{{ ha_cluster_pacemaker_shell }}/qnetd.yml
 
 - name: Export configuration

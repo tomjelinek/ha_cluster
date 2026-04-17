@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 ---
 
+# Search for existing cluster configuration files to determine if cluster is intact.
+# Followup logic is split into full and partial cleanups, depending on presence of these files.
 - name: Get stat of cluster configuration files
   ansible.builtin.stat:
     path: "{{ item }}"
@@ -16,8 +18,9 @@
     cmd: crm cluster remove --qdevice --force --yes
   register: __ha_cluster_remove_qdevice
   check_mode: false
-  when: not __ha_cluster_config_files_stat.results |
-    selectattr('stat.exists', 'equalto', false) | list | length > 0
+  # Execute only if all files are present, indicating intact cluster.
+  when: __ha_cluster_config_files_stat.results |
+    selectattr('stat.exists', 'equalto', false) | list | length == 0
   failed_when:
     # Avoid failure if there is no QDevice configuration in the cluster.
     - "'No QDevice configuration in this cluster'
@@ -30,8 +33,9 @@
 - name: Stop cluster
   ansible.builtin.command:
     cmd: crm cluster stop
-  when: not __ha_cluster_config_files_stat.results |
-    selectattr('stat.exists', 'equalto', false) | list | length > 0
+  # Execute only if all files are present, indicating intact cluster.
+  when: __ha_cluster_config_files_stat.results |
+    selectattr('stat.exists', 'equalto', false) | list | length == 0
   changed_when: true
 
 - name: Populate service facts

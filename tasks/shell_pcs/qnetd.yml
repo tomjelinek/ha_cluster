@@ -17,11 +17,13 @@
         not ha_cluster_qnetd.present | d(false)
         or ha_cluster_qnetd.regenerate_keys | d(false)
       )
+    - __ha_cluster_is_booted | bool
   changed_when: true
 
 - name: Manage qnetd
   when:
     - ha_cluster_qnetd.present | d(false)
+    - __ha_cluster_is_booted | bool
   block:
     - name: Setup qnetd
       command:
