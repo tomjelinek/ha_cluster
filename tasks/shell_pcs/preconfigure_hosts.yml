@@ -26,7 +26,7 @@
 
 - name: Configure shell
   ansible.builtin.include_tasks:
-    file: shell_{{ ha_cluster_pacemaker_shell }}/configure-shell.yml
+    file: configure-shell.yml
 
 - name: Configure firewall and selinux
   when:
