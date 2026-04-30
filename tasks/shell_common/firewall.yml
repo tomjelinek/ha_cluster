@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 ---
+
 - name: Ensure the service and the ports status with the firewall role
-  include_role:
+  ansible.builtin.include_role:
     name: fedora.linux_system_roles.firewall
   vars:
     # noqa: var-naming[no-role-prefix]

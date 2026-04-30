@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 ---
+
 - name: Populate service facts
-  service_facts:
+  ansible.builtin.service_facts:
 
 - name: Manage SELinux
   when:
@@ -10,7 +11,7 @@
     - ha_cluster_manage_selinux | bool
   block:
     - name: Set the fence-virt/fence-agents port to _ha_cluster_selinux
-      set_fact:
+      ansible.builtin.set_fact:
         _ha_cluster_selinux:
           - {'ports': '1229', 'proto': 'tcp', 'setype': 'cluster_port_t',
              'state': 'present', 'local': true}
@@ -27,24 +28,27 @@
           )
 
     - name: Get associated selinux ports
-      shell: |-
-        set -euo pipefail
-        firewall-cmd --info-service=high-availability | \
-          egrep " +ports: +" | sed -e "s/ *ports: //"
+      ansible.builtin.shell:
+        cmd: |-
+          set -euo pipefail
+          firewall-cmd --info-service=high-availability | \
+            egrep " +ports: +" | sed -e "s/ *ports: //"
       register: __ports
       changed_when: false
 
     - name: Add the high-availability service ports to _ha_cluster_selinux
-      set_fact:
+      ansible.builtin.set_fact:
         _ha_cluster_selinux: "{{ _ha_cluster_selinux | d([]) +
             [{'ports': _pair[0], 'proto': _pair[1], 'setype': 'cluster_port_t',
               'state': 'present', 'local': true}] }}"
-      vars:
-        _pair: "{{ item.split('/') }}"
       loop: "{{ __ports.stdout.split(' ') }}"
+      loop_control:
+        loop_var: port_item
+      vars:
+        _pair: "{{ port_item.split('/') }}"
 
     - name: Ensure the service and the ports status with the selinux role
-      include_role:
+      ansible.builtin.include_role:
         name: fedora.linux_system_roles.selinux
       vars:
         selinux_ports: "{{ _ha_cluster_selinux }}"

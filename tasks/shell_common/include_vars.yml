@@ -1,6 +1,8 @@
+# SPDX-License-Identifier: MIT
 ---
+
 - name: Ensure ansible_facts used by role
-  setup:
+  ansible.builtin.setup:
     gather_subset: "{{ __ha_cluster_required_facts_subsets }}"
   when: __ha_cluster_required_facts |
     difference(ansible_facts.keys() | list) | length > 0
@@ -15,12 +17,12 @@
   when: not __ha_cluster_is_ostree is defined
   block:
     - name: Check if system is ostree
-      stat:
+      ansible.builtin.stat:
         path: /run/ostree-booted
       register: __ostree_booted_stat
 
     - name: Set flag to indicate system is ostree
-      set_fact:
+      ansible.builtin.set_fact:
         __ha_cluster_is_ostree: "{{ __ostree_booted_stat.stat.exists }}"
 
 - name: Determine if system is booted with systemd
@@ -28,7 +30,7 @@
   block:
     - name: Run systemctl
       # noqa command-instead-of-module
-      command:
+      ansible.builtin.command:
         cmd: systemctl is-system-running
       register: __is_system_running
       changed_when: false
@@ -36,17 +38,18 @@
       check_mode: false
 
     - name: Require installed systemd
-      fail:
+      ansible.builtin.fail:
         msg: "Error: This role requires systemd to be installed."
       when: '"No such file or directory" in __is_system_running.msg | d("")'
 
     - name: Set flag to indicate that systemd runtime operations are available
-      set_fact:
+      ansible.builtin.set_fact:
         # see https://www.man7.org/linux/man-pages/man1/systemctl.1.html#:~:text=is-system-running%20output
         __ha_cluster_is_booted: "{{ __is_system_running.stdout != 'offline' }}"
 
 - name: Set platform/version specific variables
-  include_vars: "{{ __vars_file }}"
+  ansible.builtin.include_vars:
+    file: "{{ __vars_file }}"
   loop:
     - "{{ ansible_facts['os_family'] }}.yml"
     - "{{ ansible_facts['distribution'] }}.yml"
@@ -64,9 +67,12 @@
     - >-
       {{ ansible_facts['distribution'] ~ '_' ~
       ansible_facts['distribution_version'] }}.yml
+  loop_control:
+    loop_var: var_file_item
   vars:
-    __vars_file: "{{ role_path }}/vars/{{ item }}"
+    __vars_file: "{{ role_path }}/vars/{{ var_file_item }}"
   when: __vars_file is file
 
 - name: Set Linux Pacemaker shell specific variables
-  include_vars: "{{ role_path }}/vars/shell_{{ ha_cluster_pacemaker_shell }}.yml"  # yamllint disable-line rule:line-length
+  ansible.builtin.include_vars:
+    file: "{{ role_path }}/vars/shell_{{ ha_cluster_pacemaker_shell }}.yml"

@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 ---
 - name: Get corosync authkey
-  include_tasks: ../presharedkey.yml
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/shell_common/presharedkey.yml"
   vars:
     preshared_key_label: corosync authkey
     preshared_key_src: "{{ ha_cluster_corosync_key_src }}"
@@ -18,7 +19,8 @@
   register: __ha_cluster_distribute_corosync_authkey
 
 - name: Get pacemaker authkey
-  include_tasks: ../presharedkey.yml
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/tasks/shell_common/presharedkey.yml"
   vars:
     preshared_key_label: pacemaker authkey
     preshared_key_src: "{{ ha_cluster_pacemaker_key_src }}"
